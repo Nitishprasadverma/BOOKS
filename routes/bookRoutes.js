@@ -6,7 +6,7 @@ const isAdmin = require("../middleware/isAdmin")
 
 const route = express.Router();
 
-const { BooksByID, getAllBooks, creatBook, updateBook, deletBook } = require("../controllers/bookController")
+const { BooksByID, getAllBooks, creatBook, updateBook, deletBook } = require("../controllers/bookControllers")
 
 
 route.post("/books",auth,isAdmin , upload.single("image"), creatBook);

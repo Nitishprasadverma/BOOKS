@@ -1,8 +1,8 @@
 const express = require("express");
 const bookRoutes = require("./routes/bookRoutes");
-const userRoutes = require("./routes/authRoute");
+const userRoutes = require("./routes/authRoutes");
 const connectDB = require("./config/db");
-const errorHandler = require("./middleware/errorHandler");
+const errorHandler = require("./middleware/errorHandlers");
 
 require("dotenv").config();
 
@@ -16,6 +16,10 @@ app.use("/api", bookRoutes);
 app.use("/api/auth", userRoutes);
 
 //Error Handler Middleware
+app.use((err,req,res,next) =>{
+    console.log("MULTER ERROR", err);
+    next(err);
+})
 app.use(errorHandler);
 app.use("/uploads", express.static("uploads"));
 

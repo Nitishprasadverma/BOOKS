@@ -1,6 +1,6 @@
 // const books = require("../data/data");
 const Book = require("../models/Book");
-
+const cloudinary = require("cloudinary");
 const creatBook = async (req, res, next) => {
   try {
     const { title, author, year} = req.body;
@@ -91,33 +91,83 @@ const BooksByID = async (req, res, next) => {
 };
 
 const updateBook = async(req,res,next) =>{
-    const {id} = req.params;
-    const updateData = req.body;
+    
+    try {
+    const { id } = req.params;
+    const { title, author, year } = req.body;
+    console.log("title:",title, "Author:", author, "Year",year)
 
-    try{
-        const book = await Book.findByIdAndUpdate(id,updateData, {new: true});
-        if(!book){
-            const error = new Error("Book not found");
-      error.statusCode = 404;
-      return next(error);
-        }
-        return res.status(200).json({
-            status:200,
-            message:"updated successfully",
-            data:book
-        });
-    }catch(err){
-        err.statusCode = 500;
-        return next(err);
+    const book = await Book.findById(id);
+    if (!book) {
+      return res.status(404).json({ message: "Book not found" });
     }
+
+    // If new image uploaded → delete old image from Cloudinary
+    if (req.file) {
+      const oldImageUrl = book.image;
+      if (oldImageUrl) {
+        const publicId = oldImageUrl.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(`book-images/${publicId}`);
+      }
+
+      // update new image url
+      book.image = req.file.path;
+    }
+
+    // Update fields ONLY if provided
+    if (title) book.title = title;
+    if (author) book.author = author;
+    if (year) book.year = year;
+
+    await book.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Updated successfully",
+      data: book,
+    });
+
+  } catch (err) {
+    console.error("UPDATE ERROR:", err);
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
 }
 
 
 const deletBook = async(req,res,next) =>{
+  try {
     const {id} = req.params;
     
-    const book =await Book.findByIdAndDelete(id)
-    res.send("Book deleted");
+    const book =await Book.findById(id);
+    
+    if(!book){
+      console.log("Book not found!");
+      const error = new Error("book not found");
+      error.statusCode = 404;
+      return next(error);
+    };
+
+    //delete cloudniary image
+
+    const publicId = book.image.split("/").pop().split(".")[0];
+
+    await cloudinary.UploadStream.destroy(`book-image/${publicId}`);
+
+    await Book.findByIdAndDelete(id);
+
+    res.json({
+      success:true,
+      message:"Book + imaage deleted successfully"
+    })
+
+  } catch (error) {
+    console.log("Delete Error", error);
+    res.status = 500;
+    error.message = "Delete failed"
+    return next(error);
+  }
+    
+    
 }
 
 

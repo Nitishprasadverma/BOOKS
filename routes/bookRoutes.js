@@ -19,9 +19,9 @@ route.get("/books/:id",BooksByID)
 
 
 //Update
-route.patch("/books/update/:id",updateBook)
+route.patch("/books/update/:id",auth,isAdmin, upload.single("image"),updateBook);
 //Delete book
-route.delete("/books/delete/:id", deletBook)
+route.delete("/books/delete/:id",auth,isAdmin, deletBook);
 
 // route.post("/books/upload", auth,isAdmin,
 //     upload.single("image"),

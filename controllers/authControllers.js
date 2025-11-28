@@ -149,9 +149,48 @@ try {
     })
 }
 }
+
+const changePassword = async (req, res, next) => {
+  try {
+    // Logged-in user's ID coming from auth middleware
+    const userId = req.user.id;
+
+    // Extract passwords from body
+    const { oldPassword, newPassword } = req.body;
+
+    // Validate required fields
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Both old & new password required" });
+    }
+
+    // Fetch user including the hidden password field
+    const user = await User.findById(userId).select("+password");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Compare old password with hashed password in DB
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+
+    // If old password is wrong
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password incorrect" });
+    }
+
+    // Hash and update new password
+    user.password = await bcrypt.hash(newPassword, 10);
+
+    // Save user with updated password
+    await user.save();
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
     signup,
     login,
     refreshToken,
-    logout
+    logout,
+    changePassword
 }

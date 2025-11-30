@@ -77,7 +77,8 @@ const login = async (req,res,next) =>{
             user :{
                 id:user._id,
                 name:user.name,
-                email:user.email
+                email:user.email,
+                bio:user.bio
             }
         })
     } catch (error) {
@@ -207,11 +208,49 @@ const getProfile = async (req,res,next)  =>{
     next(error);
    }
 }
+
+const updateProfile = async (req, res, next) =>{
+
+    try {
+        const userId = req.user.id;
+
+        const {name, email,bio} = req.body;
+
+        const updateData = {};
+
+        if(name) updateData.name = name;
+        if(email) updateData.email = email;
+        if(bio) updateData.bio = bio;
+
+        //if avatar have to use upload avatar
+        if(req.file){
+            updateData.avatar = req.file.path;
+        }
+
+        const updateUser = await User.findByIdAndUpdate(
+            userId,
+            updateData,
+            {new:true}
+        ).select("-password");
+
+        res.json({
+            success :true,
+            message :"Profile updated",
+            user: updateUser
+        });
+    } catch (error) {
+        res.status(500).json({
+            success:false,
+            message :" Server error"
+        });
+    }
+};
 module.exports = {
     signup,
     login,
     refreshToken,
     logout,
     changePassword,
-    getProfile
+    getProfile,
+    updateProfile
 }

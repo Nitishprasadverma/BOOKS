@@ -19,7 +19,9 @@ const userSchema = new mongoose.Schema({
         type:String,
         required: true
     },
-    refreshToken :{type:String}
+    refreshToken :{type:String},
+    bio :{type : String, default :""},
+    avatar : {type: String, default : ""}
 
 },{timestamps:true});
 

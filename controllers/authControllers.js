@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { get } = require("mongoose");
 require("dotenv").config();
 
 
@@ -187,10 +188,30 @@ const changePassword = async (req, res, next) => {
     next(error);
   }
 };
+
+
+const getProfile = async (req,res,next)  =>{
+   try {
+    const user = await User.findById(req.user.id).select("-password -refreshToken");
+    if(!user){
+        return res.status(404).json({message:"User not found"});
+    }
+
+    res.json({
+        success:true,
+        user
+    })
+
+    
+   } catch (error) {
+    next(error);
+   }
+}
 module.exports = {
     signup,
     login,
     refreshToken,
     logout,
-    changePassword
+    changePassword,
+    getProfile
 }

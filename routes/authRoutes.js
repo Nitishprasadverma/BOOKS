@@ -1,11 +1,12 @@
 const express = require("express");
 const auth = require("../middleware/authMiddleware")
-const { signup, login, refreshToken, logout, changePassword, getProfile, updateProfile, forgotPassword, resetPassword } = require("../controllers/authControllers");
+const { signup, login, refreshToken, logout, changePassword, getProfile, updateProfile, forgotPassword, resetPassword, verifyOtp } = require("../controllers/authControllers");
 const {  } = require("jsonwebtoken");
 
 const router = express.Router();
 
 router.post("/signup", signup);
+router.post("/verify-otp", verifyOtp)
 router.post("/login",login);
 router.post("/refresh", refreshToken);
 router.post("/logout",logout )

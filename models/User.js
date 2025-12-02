@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
     avatar : {type: String, default : ""},
     resetPasswordToken : String,
     resetPasswordExpire :Date,
+    
 
 },{timestamps:true});
 

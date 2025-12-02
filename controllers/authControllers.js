@@ -1,14 +1,15 @@
 const User = require("../models/User");
+const PendingUser = require("../models/PendingUser");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../middleware/sendEmails");
+
 const { get } = require("mongoose");
 require("dotenv").config();
 
 
 //Singup
-
 const signup = async (req,res,next) =>{
     try {
         const {name,email,password,role} = req.body;
@@ -18,24 +19,47 @@ const signup = async (req,res,next) =>{
         if(exists){
             return res.status(400).json({message: "Email already registered"});
         }
+         //delete the old unverified attempts
+
+         await PendingUser.deleteOne({email});
 
         const hashedPass = await bcrypt.hash(password,10);
 
-        const user = await User.create({
-            name,
-            email,
-            role,
-            password:hashedPass
-        })
+        const otp = Math.floor(100000 + Math.random() *900000 );
+        const otpExpires = Date.now() + 5 * 60 * 1000; //5min
+        // const user = await User.create({
+        //     name,
+        //     email,
+        //     role,
+        //     password:hashedPass,
+        //     otp,
+        //     otpExpires
+        // });
+        // otp.toString();
+       await PendingUser.create({
+        name,
+        email,
+        password:hashedPass,
+        role,
+        otp,
+        otpExpires
+       })
+
+        await sendEmail({
+            to:email,
+            subject:"Your verification OTP",
+            text:`Your OTP is ${otp}. It expires in 5 minutes`,
+        });
+
+        // await sendEmail({
+        //     to:email,
+        //     subject :"Your verificaion OTP",
+        //     text : `Your OTP is ${otp}. It expires in 5 minutes`,
+        // })
 
         res.status(201).json({
-            message: "User created successfully",
-            user :{
-                id: user._id,
-                name:user.name,
-                email:user.email,
-                role:user.role
-            }
+            message: `OTP has been sent to${email} please verify to complete singup !`
+            
         })
     } catch (error) {
         next(error);
@@ -318,6 +342,53 @@ const resetPassword = async(req,res,next) =>{
         });
     }
 }
+
+const verifyOtp = async (req,res,next) =>{
+    try {
+        const {email, otp} = req.body;
+
+        const pending = await PendingUser.findOne({email});
+
+        if(!pending){
+            return res.status(400).json({
+                message:"No pending registration found"
+            });
+        }
+
+        if(pending.otp !== otp.toString()){
+            return res.status(400).json({
+                message:"Invalid OTP"
+            });
+        }
+
+        if(pending.otpExpires < Date.now()){
+            return res.status(400).json({
+                message:"OTP has been expired !"
+            })
+        }
+
+        const user = await User.create({
+            name:pending.name,
+            email:pending.email,
+            password:pending.password,
+            role:pending.role,
+            isVerified:true
+        });
+
+        await PendingUser.deleteOne({email});
+
+        return res.status(200).json({
+            message:"Singup complete! User verified.",
+            user:{
+                id:user._id,
+                name:user.name,
+                email:user.email
+            }
+        })
+    } catch (error) {
+        next(error);
+    }
+}
 module.exports = {
     signup,
     login,
@@ -327,5 +398,6 @@ module.exports = {
     getProfile,
     updateProfile,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    verifyOtp
 }

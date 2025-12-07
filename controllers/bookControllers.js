@@ -2,25 +2,97 @@
 const Book = require("../models/Book");
 const cloudinary = require("cloudinary");
 const creatBook = async (req, res, next) => {
-  try {
-    const { title, author, year} = req.body;
- const imageUrl = req.file ? req.file.path : null;
- console.log(imageUrl);
-    if (!title || !author || !year) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
-    const book = await Book.create({ title, author, year,
-    image: imageUrl
-     });
-    res.status(201).json({
+
+
+    try {
+      const {title,author,year,category,price} = req.body;
+
+      if(!title || !author || !year || !category || !price){
+        return res.status(400).json({
+          success:true,
+          message:"Title, Author, Year & Category are required",
+        })
+      }
+
+
+      
+      if(!req.files || !req.files.coverImage || !req.files.pdf){
+        return res.status(400).json({
+          success:true,
+          message:"Cover Image & PDF are requires",
+        })
+      }
+
+      //Image upload
+
+      let imageUpload;
+
+      try {
+        imageUpload = await cloudinary.uploader.upload(
+          req.files.coverImage[0].path,
+          {
+            folder:"book-images",
+            resource_type:"Image",
+          }
+        );
+      } catch (error) {
+        
+        return res.status(500).json({
+          success:false,
+          message:"Image upload failed",
+          error:error.message,
+        });
+      }
+
+      // PDF upload
+
+      let pdfUpload;
+      try {
+        pdfUpload = await cloudinary.uploader.upload(
+          req.files.pdf[0].path,
+          {
+            folder:"book-pdfs",
+            resource_type:"raw",
+            format:"pdf",
+          }
+        );
+      } catch (error) {
+        return res.status(500).json({
+          success:false,
+          message:"PDF upload failed",
+          error: error.message,
+        })
+      }
+
+      //Create Book in DB
+
+      const book = await Book.create({
+        title,
+        author,
+        year,
+        category,
+        price: price || 0,
+        coverImage:imageUpload.secure_url,
+        pdfUrl : pdfUpload.secure_url,
+        publicIdImage : imageUpload.public_id,
+        publicIdPdf: pdfUpload.public_id,
+        uploadedBy: req.user.id,
+      })
+
+      return res.status(201).json({
+        success:true,
         message:"Book created successfully",
-        data:book
-    })
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({error: error})
-    // next(error);
-  }
+        data:book,
+      });
+
+    } catch (error) {
+      console.log("Create book error ->", error);
+
+      return res.status(500).json({
+        success:false,
+        message:error.message
+      });
+    }
 };
 const getAllBooks = async (req, res, next) => {
 

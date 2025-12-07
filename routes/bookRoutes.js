@@ -1,15 +1,16 @@
 const express = require("express");
 const Book = require("../models/Book");
-const upload = require("../middleware/upload");
+
 const auth = require("../middleware/authMiddleware");
 const isAdmin = require("../middleware/isAdmin")
 
 const route = express.Router();
 
-const { BooksByID, getAllBooks, creatBook, updateBook, deletBook } = require("../controllers/bookControllers")
+const { BooksByID, getAllBooks, creatBook, updateBook, deletBook } = require("../controllers/bookControllers");
+const { uploadFiles, imageUpload } = require("../middleware/upload");
 
 
-route.post("/books",auth,isAdmin , upload.single("image"), creatBook);
+route.post("/books",auth,isAdmin ,uploadFiles, creatBook);
 
 //get all books
 route.get("/books",getAllBooks);
@@ -19,7 +20,7 @@ route.get("/books/:id",BooksByID)
 
 
 //Update
-route.patch("/books/update/:id",auth,isAdmin, upload.single("image"),updateBook);
+route.patch("/books/update/:id",auth,isAdmin, uploadFiles,updateBook);
 //Delete book
 route.delete("/books/delete/:id",auth,isAdmin, deletBook);
 

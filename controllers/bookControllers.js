@@ -270,10 +270,72 @@ if(book.publicIdPdf){
   }
 };
 
+
+
+const ratingBook = async(req,res,next) =>{
+
+
+  try {
+    
+    const {id} = req.params;
+   console.log(id);
+  const {rating}  = req.body;
+  const userId = req.user.id;
+
+  if(!rating || rating < 1 || rating > 5){
+    return res.status(400).json({
+      message:"Rating must be between 1-5 only",
+      success:false
+    })
+  }
+
+  const book   = await Book.findById(id);
+
+  if(!book){
+    return res.status(400).json({
+      message:"Book not found"
+    })
+  }
+
+  // check if user have rated already for this book;
+  const exisitngRating = book.ratings.find(
+    (r) => r.user.toString() == userId
+  );
+  if(exisitngRating){
+
+    //update rating as user try to rate over already rated by user
+    exisitngRating.rating = rating;
+  }else{
+
+    //new rating 
+    book.ratings.push({user:userId, rating})
+  }
+
+  //computing the average rating of a boook
+
+  const total = book.ratings.reduce((sum,r) => sum + r.rating,0);
+
+  book.averageRating = (total / book.ratings.length).toFixed(1);
+
+  await book.save();
+
+  return res.status(200).json({
+    success:true,
+    message:"Rating submitted successfully",
+    averageRating:book.averageRating,
+    ratings:book.ratings
+  })
+  } catch (error) {
+    console.log("Rate Error:", err);
+    return res.status(500).json({message:"Server error"});
+  }
+  
+}
 module.exports = {
   creatBook,
   getAllBooks,
   BooksByID,
   updateBook,
   deletBook,
+  ratingBook
 };

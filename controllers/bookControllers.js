@@ -240,11 +240,23 @@ const deletBook = async (req, res, next) => {
 
     //delete cloudniary image
 
-    const publicId = book.image.split("/").pop().split(".")[0];
+    if(book.publicIdImage){
+      await cloudinary.uploader.destroy(book.publicIdImage);
 
-    await cloudinary.UploadStream.destroy(`book-image/${publicId}`);
+      console.log("Image Deleted", book.publicIdImage);
+    }
+
+// find and delete pdf
+
+if(book.publicIdPdf){
+  await cloudinary.uploader.destroy(book.publicIdPdf,{
+    resource_type:"raw",
+  });
+  console.log("PDF deleted:", book.publicIdPdf);
+}
 
     await Book.findByIdAndDelete(id);
+
 
     res.json({
       success: true,

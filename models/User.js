@@ -24,7 +24,12 @@ const userSchema = new mongoose.Schema({
     avatar : {type: String, default : ""},
     resetPasswordToken : String,
     resetPasswordExpire :Date,
-    
+    wishlist: [
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Book"
+        }
+    ]
 
 },{timestamps:true});
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const bookRoutes = require("./routes/bookRoutes");
 const userRoutes = require("./routes/authRoutes");
+const wishlistRoutes = require("./routes/wishlist")
 const connectDB = require("./config/db");
 const errorHandler = require("./middleware/errorHandlers");
 
@@ -14,7 +15,7 @@ app.use(express.json());
 //routes
 app.use("/api", bookRoutes);
 app.use("/api/auth", userRoutes);
-
+app.use("/api",wishlistRoutes );
 //Error Handler Middleware
 app.use((err,req,res,next) =>{
     console.log("MULTER ERROR", err);

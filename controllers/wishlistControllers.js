@@ -74,11 +74,13 @@ const getWishlist = async (req,res) =>{
     try {
          const userId = req.user.id;
 
+         console.log("User id:", userId)
          const user = await User.findById(userId).populate("wishlist");
 
          res.status(200).json({
             success:true,
             count :user.wishlist.length,
+            Data:user.wishlist
 
          });
     } catch (error) {

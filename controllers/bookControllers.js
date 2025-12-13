@@ -123,17 +123,7 @@ const getAllBooks = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-  //   try {
-  //     const books = await Book.find();
-  //     if (!books) {
-  //       const error = new Error("Book not found");
-  //       error.statusCode = 404;
-  //       return next(error);
-  //     }
-  //     res.json(books);
-  //   } catch (err) {
-  //     next(err);
-  //   }
+   
 };
 
 const BooksByID = async (req, res, next) => {

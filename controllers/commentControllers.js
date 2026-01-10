@@ -35,16 +35,67 @@ const getBookComments = async (req,res) =>{
          const limit = Number(req.query.limit) || 5;
          const skip = (page - 1) * limit;
 
-         const comments = await Comment.find({book: req.params.id}).populate("user", "name avatar").sort({createdAt: -1}).skip(skip).limit(limit);
-  //  console.log("comments in getcomment", comments)
-         const total = await Comment.countDocuments({book: req.params.id});
+         const bookId = req.params.id;
 
-         res.json({
-            success:true,
-            page,
-            total,
-            data:comments
+         const parentComments = await Comment.find({
+          book: bookId,
+          parentComment : null
          })
+         .populate("User", "name avatar")
+         .sort({createdAt : -1})
+         .skip(skip)
+         .limit(limit)
+         .lean();
+
+         const parentIds = parentComments.map(c => c._id);
+
+         const replies = await Comment.find({
+          parentComment : {$in : parentIds}
+         })
+         .populate("user", "name avatar")
+         .sort({createdAt: 1})
+         .lean();
+
+         //attaching replies to parents
+
+         const commentMap = {};
+
+         parentComments.forEach(comment => {
+          commentMap[comment._id] = {...comment, replies: []};
+         });
+
+         replies.forEach(reply => {
+          const parentId = reply.parentComment;
+
+          if(commentMap[parentId]){
+            commentMap[parentId].replies.push(reply);
+          }
+         })
+
+         const total = await Comment.countDocuments({
+          book: bookId,
+          parentComment:null
+         });
+
+         res.status(200).json({
+          success:true,
+          page,
+          limit,
+          total,
+          totalPages : Math.ceil(total / limit),
+          data: Object.values(commentMap)
+         })
+
+  //        const comments = await Comment.find({book: req.params.id}).populate("user", "name avatar").sort({createdAt: -1}).skip(skip).limit(limit);
+  // //  console.log("comments in getcomment", comments)
+  //        const total = await Comment.countDocuments({book: req.params.id});
+
+  //        res.json({
+  //           success:true,
+  //           page,
+  //           total,
+  //           data:comments
+  //        })
 
 
     } catch (error) {

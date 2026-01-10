@@ -41,7 +41,7 @@ const getBookComments = async (req,res) =>{
           book: bookId,
           parentComment : null
          })
-         .populate("User", "name avatar")
+         .populate("user", "name avatar")
          .sort({createdAt : -1})
          .skip(skip)
          .limit(limit)
